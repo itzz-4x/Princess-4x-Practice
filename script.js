@@ -1,119 +1,92 @@
-// ===== CONFIG =====
-const TOTAL_SECONDS = 10800; // 3 hours
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzShjgiRIjDW8Bc7Rbd56ofB6cT3BBCPcMqIyCehK1ow8Mv-FdWC26OkVNivpGIsVLBIQ/exec";
-const TOKEN = "P4XPortalSecure2025";
-
-// ===== VARIABLES =====
-let timer = TOTAL_SECONDS;
-let current = 0;
-let answers = Array(QUESTIONS.length).fill(null);
+let currentQuestion = 0;
 let score = 0;
-const el = id => document.getElementById(id);
+let correct = 0;
+let wrong = 0;
+let username = "";
+let timerSec = 10800; // 3 hours
+let timerInterval;
 
-// ===== TIMER FORMAT =====
-function formatTime(s){
-  const h = Math.floor(s/3600).toString().padStart(2,'0');
-  const m = Math.floor((s%3600)/60).toString().padStart(2,'0');
-  const sec = (s%60).toString().padStart(2,'0');
-  return `${h}:${m}:${sec}`;
-}
+// 🔹 Replace with your deployed Web App URL
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwOqN09GhtOWmT_WwJVgCgDAqiV2tck7XapYyDpKxEq08mpV0vAu06UKbSMA-y94tPoxg/exec";
+const SECRET_TOKEN = "NEET2025_SECRET_8867";
 
-// ===== START EXAM =====
-function startExam(){
-  const name = el('name').value.trim();
-  if(!name){ alert('Enter name'); return; }
-  localStorage.setItem('neet_user', name);
-  el('start').style.display='none';
-  el('exam').style.display='block';
-  renderQuestion();
+function startTest() {
+  username = document.getElementById("username").value.trim();
+  if(!username){ alert("Please enter name!"); return;}
+  document.getElementById("start-screen").style.display="none";
+  document.getElementById("test-screen").style.display="flex";
+  showQuestion();
   startTimer();
 }
 
-// ===== TIMER =====
-function startTimer(){
-  el('timer').innerText = formatTime(timer);
-  window._timerInterval = setInterval(()=>{
-    timer--;
-    if(timer <= 0){
-      clearInterval(window._timerInterval);
-      finishExam();
-      return;
-    }
-    el('timer').innerText = formatTime(timer);
+function startTimer() {
+  timerInterval = setInterval(()=>{
+    if(timerSec<=0){ finishTest(); return;}
+    timerSec--;
+    let h=Math.floor(timerSec/3600).toString().padStart(2,'0');
+    let m=Math.floor((timerSec%3600)/60).toString().padStart(2,'0');
+    let s=(timerSec%60).toString().padStart(2,'0');
+    document.getElementById("timer").innerText=`${h}:${m}:${s}`;
   },1000);
 }
 
-// ===== RENDER QUESTION =====
-function renderQuestion(){
-  const q = QUESTIONS[current];
-  el('qnum').innerText = `Q ${current+1} / ${QUESTIONS.length}`;
-  el('question').innerText = q.q;
-  const opts = el('opts');
-  opts.innerHTML='';
-  q.a.forEach((op,i)=>{
-    const d = document.createElement('div');
-    d.className='opt';
-    d.innerText = op;
-    if(answers[current]===i) d.classList.add('selected');
-    d.onclick = ()=>{
-      answers[current] = i;
-      document.querySelectorAll('.opt').forEach(x=>x.classList.remove('selected'));
-      d.classList.add('selected');
-    };
-    opts.appendChild(d);
+function showQuestion() {
+  let q = questions[currentQuestion];
+  document.getElementById("question-text").innerText=`Q${currentQuestion+1}. ${q.q}`;
+  let optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML="";
+  q.options.forEach((opt,i)=>{
+    let btn = document.createElement("button");
+    btn.classList.add("option-btn");
+    btn.innerText=opt;
+    btn.onclick=()=>selectOption(i);
+    if(q.selected==i) btn.classList.add("selected");
+    optionsDiv.appendChild(btn);
   });
-  el('prev').disabled = current===0;
 }
 
-// ===== NAVIGATION =====
-function prevQ(){ if(current>0){ current--; renderQuestion(); } }
-function nextQ(){ if(current<QUESTIONS.length-1){ current++; renderQuestion(); } else finishExam(); }
-
-// ===== SEND SCORE TO GOOGLE SHEET =====
-async function sendScoreToSheet(name, score, duration){
-  const payload = {name, score, duration, token: TOKEN};
-  try{
-    const res = await fetch(WEB_APP_URL,{
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: {"Content-Type":"application/json"}
-    });
-    const data = await res.json();
-    console.log("Sheet Submission:", data);
-  }catch(err){
-    console.error("SendScore error:", err);
-  }
+function selectOption(idx){
+  questions[currentQuestion].selected = idx;
+  showQuestion();
 }
 
-// ===== FINISH EXAM =====
-function finishExam(){
-  clearInterval(window._timerInterval);
-  score = 0;
-  for(let i=0;i<QUESTIONS.length;i++){
-    const ans = answers[i];
-    if(ans===null) continue;
-    if(ans===QUESTIONS[i].correct) score +=4;
-    else score -=1;
-  }
-  const user = localStorage.getItem('neet_user') || 'Unknown';
-  const duration = TOTAL_SECONDS - timer;
-
-  // Local logs
-  const logs = JSON.parse(localStorage.getItem('neet_logs')||'[]');
-  logs.push({user,score,time:new Date().toISOString()});
-  localStorage.setItem('neet_logs', JSON.stringify(logs));
-
-  // Send to Google Sheet
-  sendScoreToSheet(user, score, duration);
-
-  // Show result
-  el('exam').style.display='none';
-  el('result').style.display='block';
-  el('resText').innerText = `${user}, your score: ${score} / ${QUESTIONS.length*4}`;
+function nextQuestion(){
+  if(currentQuestion<questions.length-1){ currentQuestion++; showQuestion();}
 }
 
-// ===== EVENT LISTENERS =====
-el('startBtn').addEventListener('click', startExam);
-el('prev').addEventListener('click', prevQ);
-el('next').addEventListener('click', nextQ);
-el('restart').addEventListener('click', ()=>location.reload());
+function prevQuestion(){
+  if(currentQuestion>0){ currentQuestion--; showQuestion();}
+}
+
+function finishTest(){
+  clearInterval(timerInterval);
+  score=0; correct=0; wrong=0;
+  questions.forEach(q=>{
+    if(q.selected==q.ans){ score+=4; correct++; }
+    else if(q.selected!=undefined){ score-=1; wrong++; }
+  });
+  document.getElementById("test-screen").style.display="none";
+  document.getElementById("result-screen").style.display="flex";
+  document.getElementById("score-text").innerText=`Score: ${score}`;
+  document.getElementById("details-text").innerText=`Correct: ${correct} | Wrong: ${wrong} | Name: ${username}`;
+  sendResult();
+}
+
+function sendResult(){
+  let data={
+    Name: username,
+    Score: score,
+    Correct: correct,
+    Wrong: wrong,
+    Time: document.getElementById("timer").innerText,
+    secret: SECRET_TOKEN
+  };
+  fetch(WEB_APP_URL,{
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(data)
+  })
+  .then(r=>r.json())
+  .then(resp=>console.log("Saved:", resp))
+  .catch(err=>console.error("Save failed:", err));
+}

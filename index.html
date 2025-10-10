@@ -1,31 +1,38 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Princess 4X Practice Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css"></head><body>
-<div class="page">
-  <header class="hero">
-    <div class="logo">👑</div>
-    <h1>Princess 4X Practice Portal</h1>
-  </header>
-  <main class="main">
-    <section class="card" id="start">
-      <h2>Enter your name to begin</h2>
-      <input id="name" placeholder="Your full name">
-      <div class="row"><button id="startBtn">Start Test</button></div>
-    </section>
-    <section class="card" id="exam" style="display:none">
-      <div class="exam-top"><div id="timer">03:30:00</div><div id="qnum"></div></div>
-      <div id="question" class="question"></div>
-      <div id="opts" class="opts"></div>
-      <div class="nav"><button id="prev">Previous</button><button id="next">Next</button></div>
-    </section>
-    <section class="card" id="result" style="display:none">
-      <h2>Well done!</h2>
-      <div id="resText" class="resText"></div>
-      <div class="row"><button id="restart">Take Again</button></div>
-    </section>
-  </main>
-  <footer class="foot">Made By Princess ❤️</footer>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEET Practice Test</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="start-screen" id="start-screen">
+  <h1>Welcome to NEET Practice Test</h1>
+  <input type="text" id="username" placeholder="Enter your name" required>
+  <button onclick="startTest()">Start Test</button>
 </div>
-<script src="questions.js"></script><script src="script.js"></script></body></html>
+
+<div class="test-screen" id="test-screen" style="display:none;">
+  <div class="timer">Time Left: <span id="timer">03:00:00</span></div>
+  <div class="question-container">
+    <h2 id="question-text"></h2>
+    <div id="options"></div>
+  </div>
+  <div class="navigation">
+    <button onclick="prevQuestion()">Previous</button>
+    <button onclick="nextQuestion()">Next</button>
+  </div>
+  <button onclick="finishTest()" class="finish-btn">Finish Test</button>
+</div>
+
+<div class="result-screen" id="result-screen" style="display:none;">
+  <h1>Result</h1>
+  <p id="score-text"></p>
+  <p id="details-text"></p>
+</div>
+
+<script src="questions.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

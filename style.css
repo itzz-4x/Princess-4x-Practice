@@ -1,0 +1,12 @@
+
+body{font-family:Inter,Arial;background:linear-gradient(135deg,#6a11cb,#2575fc);margin:0;padding:20px;color:#fff}
+.wrap{max-width:720px;margin:0 auto}
+.card{background:rgba(255,255,255,0.06);padding:18px;border-radius:12px;margin-bottom:16px;box-shadow:0 8px 30px rgba(0,0,0,0.25)}
+h1{margin:0 0 12px}
+input#name{width:100%;padding:12px;border-radius:8px;border:none;margin-bottom:10px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+#question{font-weight:600;margin-bottom:10px}
+.opt{background:rgba(255,255,255,0.04);padding:12px;border-radius:8px;margin:8px 0;cursor:pointer}
+.opt.selected{outline:3px solid rgba(255,255,255,0.12)}
+.nav{display:flex;gap:8px}
+button{padding:10px 14px;border-radius:8px;border:none;background:#fff;color:#111;font-weight:700;cursor:pointer}

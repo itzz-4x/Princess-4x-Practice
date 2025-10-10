@@ -1,4 +1,4 @@
-const TOTAL_SECONDS = 210*60;
+const TOTAL_SECONDS = 10800; // 3 hours
 let timer = TOTAL_SECONDS;
 let current = 0;
 let answers = Array(QUESTIONS.length).fill(null);
@@ -8,6 +8,7 @@ const el = id=>document.getElementById(id);
 // --- Google Sheet Config ---
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5H4UMbNsEMd0pOO46ijtu6CKpEDEQxFkK75qABmCvb-_SRPA-ibd9U3Qy5IHZ2ogJyQ/exec";
 const TOKEN = "P4XPortalSecure2025";
+const SHEET_TAB = "Admin";
 
 // --- Timer format ---
 function formatTime(s){
@@ -30,11 +31,15 @@ function startExam(){
 
 // --- Timer ---
 function startTimer(){
-  el('timer').innerText=formatTime(timer);
+  el('timer').innerText = formatTime(timer);
   window._timerInterval = setInterval(()=>{
     timer--;
-    if(timer<=0){clearInterval(window._timerInterval);finishExam();return;}
-    el('timer').innerText=formatTime(timer);
+    if(timer <= 0){ 
+      clearInterval(window._timerInterval);
+      finishExam(); // Auto finish when time is over
+      return;
+    }
+    el('timer').innerText = formatTime(timer);
   },1000);
 }
 

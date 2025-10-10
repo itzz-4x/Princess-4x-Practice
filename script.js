@@ -1,4 +1,4 @@
-const TOTAL_SECONDS = 210*60; // 3.5 hours
+const TOTAL_SECONDS = 180*60; // 3.5 hours
 let timer = TOTAL_SECONDS;
 let current = 0;
 let answers = Array(QUESTIONS.length).fill(null);

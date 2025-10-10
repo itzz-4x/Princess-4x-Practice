@@ -1,115 +1,110 @@
-// Variables
-let currentQuestion = 0;
+const TOTAL_SECONDS = 210*60; // 3.5 hours
+let timer = TOTAL_SECONDS;
+let current = 0;
+let answers = Array(QUESTIONS.length).fill(null);
 let score = 0;
-let correct = 0;
-let wrong = 0;
-let username = "";
-let timerSec = 10800; // 3 hours
-let timerInterval;
+const el = id=>document.getElementById(id);
 
-// Replace with your deployed Web App URL
+// Google Sheet config
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwOqN09GhtOWmT_WwJVgCgDAqiV2tck7XapYyDpKxEq08mpV0vAu06UKbSMA-y94tPoxg/exec";
 const SECRET_TOKEN = "NEET2025_SECRET_8867";
 
-// DOM Elements
-let startBtn, nextBtn, prevBtn, finishBtn;
-
-document.addEventListener("DOMContentLoaded", function(){
-  startBtn = document.getElementById("start-btn");
-  nextBtn = document.getElementById("next-btn");
-  prevBtn = document.getElementById("prev-btn");
-  finishBtn = document.getElementById("finish-btn");
-
-  startBtn.addEventListener("click", startTest);
-  nextBtn.addEventListener("click", nextQuestion);
-  prevBtn.addEventListener("click", prevQuestion);
-  finishBtn.addEventListener("click", finishTest);
-});
-
-// Start Test
-function startTest() {
-  username = document.getElementById("username").value.trim();
-  if(!username){ alert("Please enter name!"); return;}
-  document.getElementById("start-screen").style.display="none";
-  document.getElementById("test-screen").style.display="flex";
-  showQuestion();
-  startTimer();
+function formatTime(s){
+    const h=Math.floor(s/3600).toString().padStart(2,'0');
+    const m=Math.floor((s%3600)/60).toString().padStart(2,'0');
+    const sec=(s%60).toString().padStart(2,'0');
+    return `${h}:${m}:${sec}`;
 }
 
-// Timer
-function startTimer() {
-  timerInterval = setInterval(()=>{
-    if(timerSec<=0){ finishTest(); return;}
-    timerSec--;
-    let h=Math.floor(timerSec/3600).toString().padStart(2,'0');
-    let m=Math.floor((timerSec%3600)/60).toString().padStart(2,'0');
-    let s=(timerSec%60).toString().padStart(2,'0');
-    document.getElementById("timer").innerText=`${h}:${m}:${s}`;
-  },1000);
+function startExam(){
+    const name=el('name').value.trim();
+    if(!name){alert('Please enter your name');return;}
+    localStorage.setItem('neet_user', name);
+    document.getElementById('start').style.display='none';
+    document.getElementById('exam').style.display='block';
+    renderQuestion();
+    startTimer();
+    window.scrollTo(0,0);
 }
 
-// Show Question
-function showQuestion() {
-  let q = QUESTIONS[currentQuestion];
-  document.getElementById("question-text").innerText = `Q${currentQuestion+1}. ${q.q}`;
-  let optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML = "";
-  q.a.forEach((opt, i) => {
-    let btn = document.createElement("button");
-    btn.classList.add("option-btn");
-    btn.innerText = opt;
-    btn.onclick = () => selectOption(i);
-    if(q.selected == i) btn.classList.add("selected");
-    optionsDiv.appendChild(btn);
-  });
+function startTimer(){
+    el('timer').innerText=formatTime(timer);
+    window._timerInterval = setInterval(()=>{
+        timer--;
+        if(timer<=0){
+            clearInterval(window._timerInterval);
+            finishExam();
+            return;
+        }
+        el('timer').innerText=formatTime(timer);
+    },1000);
 }
 
-// Select Option
-function selectOption(idx){
-  QUESTIONS[currentQuestion].selected = idx;
-  showQuestion();
+function renderQuestion(){
+    const q=QUESTIONS[current];
+    el('qnum').innerText=`Q ${current+1} / ${QUESTIONS.length}`;
+    el('question').innerText=q.q;
+    const opts=el('opts');
+    opts.innerHTML='';
+    q.a.forEach((op,i)=>{
+        const d=document.createElement('div');
+        d.className='opt';
+        d.innerText=op;
+        if(answers[current]===i)d.classList.add('selected');
+        d.onclick=()=>{
+            answers[current]=i;
+            document.querySelectorAll('.opt').forEach(x=>x.classList.remove('selected'));
+            d.classList.add('selected');
+        };
+        opts.appendChild(d);
+    });
+    el('prev').disabled = current===0;
+    el('next').innerText = current<QUESTIONS.length-1 ? 'Next' : 'Finish';
 }
 
-// Navigation
-function nextQuestion(){
-  if(currentQuestion<QUESTIONS.length-1){ currentQuestion++; showQuestion();}
+function prevQ(){if(current>0){current--;renderQuestion();}}
+function nextQ(){if(current<QUESTIONS.length-1){current++;renderQuestion();}else finishExam();}
+
+function finishExam(){
+    clearInterval(window._timerInterval);
+    score=0;
+    let correct=0, wrong=0;
+    for(let i=0;i<QUESTIONS.length;i++){
+        const ans=answers[i];
+        if(ans===null) continue;
+        if(ans===QUESTIONS[i].correct){score+=4; correct++;} 
+        else {score-=1; wrong++;}
+    }
+    const user=localStorage.getItem('neet_user')||'Unknown';
+    const logs=JSON.parse(localStorage.getItem('neet_logs')||'[]');
+    logs.push({user,score,time:new Date().toISOString()});
+    localStorage.setItem('neet_logs',JSON.stringify(logs));
+    document.getElementById('exam').style.display='none';
+    document.getElementById('result').style.display='block';
+    el('resText').innerText=`${user}, your score: ${score} / ${QUESTIONS.length*4}`;
+
+    // ========== Send result to Google Sheet ==========
+    const data = {
+        Name: user,
+        Score: score,
+        Correct: correct,
+        Wrong: wrong,
+        Time: formatTime(timer),
+        SubmittedAt: new Date().toISOString(),
+        secret: SECRET_TOKEN
+    };
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+    })
+    .then(r=>r.json())
+    .then(resp=>console.log("Saved to Sheet:", resp))
+    .catch(err=>console.error("Save failed:", err));
 }
 
-function prevQuestion(){
-  if(currentQuestion>0){ currentQuestion--; showQuestion();}
-}
-
-// Finish Test
-function finishTest(){
-  clearInterval(timerInterval);
-  score = 0; correct = 0; wrong = 0;
-  QUESTIONS.forEach(q => {
-    if(q.selected == q.correct){ score+=4; correct++; }
-    else if(q.selected != undefined){ score-=1; wrong++; }
-  });
-  document.getElementById("test-screen").style.display="none";
-  document.getElementById("result-screen").style.display="flex";
-  document.getElementById("score-text").innerText = `Score: ${score}`;
-  document.getElementById("details-text").innerText = `Correct: ${correct} | Wrong: ${wrong} | Name: ${username}`;
-  sendResult();
-}
-
-// Send result to Google Sheet
-function sendResult(){
-  let data={
-    Name: username,
-    Score: score,
-    Correct: correct,
-    Wrong: wrong,
-    Time: document.getElementById("timer").innerText,
-    secret: SECRET_TOKEN
-  };
-  fetch(WEB_APP_URL,{
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(data)
-  })
-  .then(r=>r.json())
-  .then(resp=>console.log("Saved:", resp))
-  .catch(err=>console.error("Save failed:", err));
-  }
+// ==================== Event Listeners ====================
+document.getElementById('startBtn').addEventListener('click',startExam);
+document.getElementById('prev').addEventListener('click',prevQ);
+document.getElementById('next').addEventListener('click',nextQ);
+document.getElementById('restart').addEventListener('click',()=>location.reload());

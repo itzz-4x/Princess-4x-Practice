@@ -1,3 +1,4 @@
+// Variables
 let currentQuestion = 0;
 let score = 0;
 let correct = 0;
@@ -6,10 +7,23 @@ let username = "";
 let timerSec = 10800; // 3 hours
 let timerInterval;
 
-// 🔹 Replace with your deployed Web App URL
+// Replace with your deployed Web App URL
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwOqN09GhtOWmT_WwJVgCgDAqiV2tck7XapYyDpKxEq08mpV0vAu06UKbSMA-y94tPoxg/exec";
 const SECRET_TOKEN = "NEET2025_SECRET_8867";
 
+// DOM Elements
+const startBtn = document.getElementById("start-btn");
+const nextBtn = document.getElementById("next-btn");
+const prevBtn = document.getElementById("prev-btn");
+const finishBtn = document.getElementById("finish-btn");
+
+// Event Listeners
+startBtn.addEventListener("click", startTest);
+nextBtn.addEventListener("click", nextQuestion);
+prevBtn.addEventListener("click", prevQuestion);
+finishBtn.addEventListener("click", finishTest);
+
+// Functions
 function startTest() {
   username = document.getElementById("username").value.trim();
   if(!username){ alert("Please enter name!"); return;}

@@ -1,1 +1,31 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>4x NEET Practice</title><link rel="stylesheet" href="style.css"></head><body><div class="wrap"><div class="card" id="start"><h1>4x NEET Practice</h1><input id="name" placeholder="Enter your name"><button id="startBtn">Start Exam</button></div><div class="card" id="exam" style="display:none"><div class="top"><div id="timer">03:30:00</div><div id="qnum"></div></div><div id="question"></div><div id="opts"></div><div class="nav"><button id="prev">Previous</button><button id="next">Next</button></div></div><div class="card" id="result" style="display:none"><h2>Result</h2><div id="resText"></div><button id="restart">Restart</button></div></div><script src="questions.js"></script><script src="script.js"></script></body></html>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Princess 4X Practice Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head><body>
+<div class="page">
+  <header class="hero">
+    <div class="logo">👑</div>
+    <h1>Princess 4X Practice Portal</h1>
+  </header>
+  <main class="main">
+    <section class="card" id="start">
+      <h2>Enter your name to begin</h2>
+      <input id="name" placeholder="Your full name">
+      <div class="row"><button id="startBtn">Start Test</button></div>
+    </section>
+    <section class="card" id="exam" style="display:none">
+      <div class="exam-top"><div id="timer">03:30:00</div><div id="qnum"></div></div>
+      <div id="question" class="question"></div>
+      <div id="opts" class="opts"></div>
+      <div class="nav"><button id="prev">Previous</button><button id="next">Next</button></div>
+    </section>
+    <section class="card" id="result" style="display:none">
+      <h2>Well done!</h2>
+      <div id="resText" class="resText"></div>
+      <div class="row"><button id="restart">Take Again</button></div>
+    </section>
+  </main>
+  <footer class="foot">Made By Princess ❤️</footer>
+</div>
+<script src="questions.js"></script><script src="script.js"></script></body></html>

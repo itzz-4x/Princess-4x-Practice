@@ -1,9 +1,12 @@
-const TOTAL_SECONDS = 180 * 60; // 3 hours
+const TOTAL_SECONDS = 180 * 60;
 let timer = TOTAL_SECONDS;
 let current = 0;
 let answers = Array(QUESTIONS.length).fill(null);
 let score = 0;
 const el = id => document.getElementById(id);
+
+// Backend Configuration
+const BACKEND_URL = 'https://princess4x-backend.vercel.app';
 
 function formatTime(s) {
     const h = Math.floor(s / 3600).toString().padStart(2, '0');
@@ -61,19 +64,17 @@ function renderQuestion() {
 function prevQ() { if (current > 0) { current--; renderQuestion(); } }
 function nextQ() { if (current < QUESTIONS.length - 1) { current++; renderQuestion(); } else finishExam(); }
 
-// ✅ Finish Button Function
 function finishExam() {
-    if (confirm("Are you sure you want to finish the test? You cannot go back!")) {
+    if (confirm("Are you sure you want to finish the test?")) {
         clearInterval(window._timerInterval);
         calculateScore();
     }
 }
 
-function calculateScore() {
+async function calculateScore() {
     score = 0;
     let correct = 0, wrong = 0, unattempted = 0;
     
-    // Calculate scores with unattempted
     for (let i = 0; i < QUESTIONS.length; i++) {
         const ans = answers[i];
         if (ans === null) {
@@ -89,14 +90,14 @@ function calculateScore() {
         }
     }
     
-    // Calculate percentage
     const percentage = ((score / (QUESTIONS.length * 4)) * 100).toFixed(2);
-    
     const user = localStorage.getItem('neet_user') || 'Unknown';
+    
+    // Backend save karo
+    await saveToBackend(user, score, correct, wrong, unattempted, percentage);
+    
     el('exam').style.display = 'none';
     el('result').style.display = 'block';
-    
-    // ✅ Show detailed results
     el('resText').innerHTML = `
         <div class="detailed-results">
             <h3>🎯 Test Completed, ${user}!</h3>
@@ -109,50 +110,50 @@ function calculateScore() {
                 <p><strong>⏰ Time Left:</strong> ${formatTime(timer)}</p>
             </div>
             <p style="color: #666; font-size: 14px; margin-top: 15px;">
-                📧 Result sent to Gmail | 💾 Saved locally
+                ✅ Result saved to database
             </p>
         </div>
     `;
+}
 
-    // ✅ Send to Gmail
-    sendToGmail(user, score, correct, wrong, unattempted, percentage);
+// 📊 BACKEND SAVE FUNCTION
+async function saveToBackend(user, score, correct, wrong, unattempted, percentage) {
+    const resultData = {
+        student_name: user,
+        score: score,
+        total_questions: QUESTIONS.length,
+        percentage: percentage,
+        correct_answers: correct,
+        wrong_answers: wrong,
+        unattempted_questions: unattempted,
+        time_taken: formatTime(TOTAL_SECONDS - timer),
+        submitted_at: new Date().toISOString(),
+        portal: 'Princess 4X Practice'
+    };
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/save-result`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(resultData)
+        });
+
+        if (response.ok) {
+            console.log('✅ Result saved to backend database!');
+            return true;
+        }
+    } catch (error) {
+        console.log('❌ Backend save failed:', error);
+    }
     
-    // ✅ Save locally
+    // Backup local storage
     saveResultsLocal(user, score, correct, wrong, unattempted, percentage);
+    return false;
 }
 
-// 📧 Gmail Integration Function
-function sendToGmail(user, score, correct, wrong, unattempted, percentage) {
-    const subject = `NEET Test Result - ${user}`;
-    const body = `
-📊 NEET TEST RESULT - Princess 4X Portal
-=================================
-
-👤 Student Name: ${user}
-📅 Test Date: ${new Date().toLocaleString()}
-🎯 Total Score: ${score}/${QUESTIONS.length * 4}
-📈 Percentage: ${percentage}%
-
-📋 Detailed Breakdown:
-✅ Correct Answers: ${correct}
-❌ Wrong Answers: ${wrong}  
-⏸️ Unattempted: ${unattempted}
-
-⏰ Time Completed In: ${formatTime(TOTAL_SECONDS - timer)}
-📝 Total Questions: ${QUESTIONS.length}
-
-=================================
-Generated via Princess 4X Practice Portal
-    `.trim();
-
-    // 📧 TUMHARI GMAIL
-    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=mohammedanas4x@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // Open Gmail in new tab
-    window.open(gmailLink, '_blank');
-}
-
-// 💾 Local Storage Save Function
+// 💾 LOCAL STORAGE BACKUP
 function saveResultsLocal(user, score, correct, wrong, unattempted, percentage) {
     const result = {
         name: user,
@@ -164,148 +165,100 @@ function saveResultsLocal(user, score, correct, wrong, unattempted, percentage) 
         time: new Date().toLocaleString()
     };
     
-    // LocalStorage mein save karo
     let allResults = JSON.parse(localStorage.getItem('neet_results') || '[]');
     allResults.push(result);
     localStorage.setItem('neet_results', JSON.stringify(allResults));
-    
-    return allResults;
 }
 
-// 🔒 Admin Panel Function
-function showAdminLogin() {
-    const ADMIN_PASSWORD = "princess2025";
-    const password = prompt("🔒 Enter Admin Password:");
-    
-    if (password === ADMIN_PASSWORD) {
-        showAllStudentsResults();
-    } else if (password) {
-        alert("❌ Wrong password!");
+// 📈 ADMIN PANEL FUNCTION
+async function showAllStudentsResults() {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/results`);
+        const allResults = await response.json();
+        
+        let html = `
+            <div class="admin-panel">
+                <h2>🔧 Admin Dashboard - Backend Results</h2>
+                <p><strong>Total Tests:</strong> ${allResults.length}</p>
+                <button onclick="downloadBackendResults()" class="btn-download">📥 Export All Data</button>
+                <div class="results-container">
+        `;
+        
+        if (allResults.length === 0) {
+            html += `<p>No results in database yet.</p>`;
+        } else {
+            allResults.forEach((result, index) => {
+                html += `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <span class="test-no">#${index + 1}</span>
+                            <span class="test-date">${new Date(result.submitted_at).toLocaleString()}</span>
+                        </div>
+                        <div class="result-body">
+                            <p><strong>Student:</strong> ${result.student_name}</p>
+                            <p><strong>Score:</strong> ${result.score}/${result.total_questions * 4}</p>
+                            <p><strong>Percentage:</strong> ${result.percentage}%</p>
+                            <p><strong>Correct:</strong> ${result.correct_answers} | <strong>Wrong:</strong> ${result.wrong_answers} | <strong>Unattempted:</strong> ${result.unattempted_questions}</p>
+                            <p><strong>Time:</strong> ${result.time_taken}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        html += `</div></div>`;
+        el('result').innerHTML = html;
+        
+    } catch (error) {
+        console.log('❌ Backend fetch failed:', error);
+        showAllStudentsResultsLocal();
     }
 }
 
-// 📊 All Results Display Function
-function showAllStudentsResults() {
-    const allResults = JSON.parse(localStorage.getItem('neet_results') || '[]');
-    
-    if (allResults.length === 0) {
-        el('result').innerHTML = `
-            <h2>🔧 Admin Panel</h2>
-            <p>No test results found yet.</p>
-            <div class="row">
-                <button onclick="location.reload()">Back to Test</button>
-            </div>
-        `;
-    } else {
-        let html = `<h2>🔧 Admin Panel</h2><p>Total Tests: ${allResults.length}</p><div class="results-list">`;
+// 📥 EXPORT BACKEND DATA
+async function downloadBackendResults() {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/export-results`);
+        const data = await response.json();
         
-        allResults.forEach((result, index) => {
-            html += `
-                <div class="result-item">
-                    <strong>Test ${index + 1}:</strong> ${result.name}<br>
-                    Score: ${result.score} | Percentage: ${result.percentage}<br>
-                    Correct: ${result.correct} | Wrong: ${result.wrong} | Unattempted: ${result.unattempted}<br>
-                    <small>${result.time}</small>
-                    <hr>
-                </div>
-            `;
+        let content = 'NEET TEST RESULTS - Backend Database\n';
+        content += '===================================\n\n';
+        
+        data.forEach((result, index) => {
+            content += `TEST #${index + 1}\n`;
+            content += `Student: ${result.student_name}\n`;
+            content += `Date: ${new Date(result.submitted_at).toLocaleString()}\n`;
+            content += `Score: ${result.score}/${result.total_questions * 4}\n`;
+            content += `Percentage: ${result.percentage}%\n`;
+            content += `Correct: ${result.correct_answers} | Wrong: ${result.wrong_answers} | Unattempted: ${result.unattempted_questions}\n`;
+            content += `Time: ${result.time_taken}\n`;
+            content += '-----------------------------------\n';
         });
         
-        html += `</div>
-            <div class="row">
-                <button onclick="downloadAllResults()">📥 Download All</button>
-                <button onclick="clearAllResults()">🗑️ Clear All</button>
-                <button onclick="location.reload()">Back to Test</button>
-            </div>
-        `;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `BACKEND_RESULTS_${new Date().toLocaleDateString()}.txt`;
+        a.click();
         
-        el('result').innerHTML = html;
-    }
-    
-    el('exam').style.display = 'none';
-    el('start').style.display = 'none';
-    el('result').style.display = 'block';
-}
-
-// 📥 Download All Results
-function downloadAllResults() {
-    const allResults = JSON.parse(localStorage.getItem('neet_results') || '[]');
-    
-    let content = 'NEET TEST RESULTS - Princess 4X Portal\n';
-    content += '===================================\n\n';
-    
-    allResults.forEach((result, index) => {
-        content += `TEST #${index + 1}\n`;
-        content += `Student: ${result.name}\n`;
-        content += `Date: ${result.time}\n`;
-        content += `Score: ${result.score}\n`;
-        content += `Percentage: ${result.percentage}\n`;
-        content += `Correct: ${result.correct} | Wrong: ${result.wrong} | Unattempted: ${result.unattempted}\n`;
-        content += '-----------------------------------\n';
-    });
-    
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ALL_NEET_RESULTS_${new Date().toLocaleDateString()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-// 🗑️ Clear All Results
-function clearAllResults() {
-    if (confirm('Are you sure you want to delete ALL results? This cannot be undone!')) {
-        localStorage.removeItem('neet_results');
-        alert('All results cleared successfully!');
-        showAllStudentsResults();
-    }
-}
-
-// ✅ AUTOMATICALLY FINISH BUTTON CREATE KARO (FIXED)
-function addFinishButton() {
-    // Wait for exam section to be available
-    setTimeout(() => {
-        const nav = document.querySelector('.nav');
-        if (nav && !document.getElementById('finishBtn')) {
-            const finishBtn = document.createElement('button');
-            finishBtn.id = 'finishBtn';
-            finishBtn.textContent = '🏁 Finish Test';
-            finishBtn.onclick = finishExam;
-            nav.appendChild(finishBtn);
-        }
-    }, 100);
-}
-
-// ✅ ADD ADMIN BUTTON (FIXED)
-function addAdminButton() {
-    const startSection = document.getElementById('start');
-    if (startSection) {
-        const row = startSection.querySelector('.row');
-        if (row && !startSection.querySelector('.admin-btn')) {
-            const adminBtn = document.createElement('button');
-            adminBtn.className = 'admin-btn';
-            adminBtn.textContent = '🔧 Admin Panel';
-            adminBtn.style.background = '#666';
-            adminBtn.style.marginTop = '10px';
-            adminBtn.onclick = showAdminLogin;
-            row.appendChild(adminBtn);
-        }
+    } catch (error) {
+        alert('❌ Failed to export data');
     }
 }
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Add admin button
-    addAdminButton();
-    
-    // Add finish button when exam starts
-    document.getElementById('startBtn').addEventListener('click', function() {
-        setTimeout(addFinishButton, 500);
-    });
-});
-
 document.getElementById('startBtn').addEventListener('click', startExam);
 document.getElementById('prev').addEventListener('click', prevQ);
 document.getElementById('next').addEventListener('click', nextQ);
 document.getElementById('restart').addEventListener('click', () => location.reload());
+
+// Admin Button
+document.addEventListener('DOMContentLoaded', function() {
+    const adminBtn = document.createElement('button');
+    adminBtn.textContent = '🔧 Admin Panel';
+    adminBtn.style.background = '#666';
+    adminBtn.style.marginTop = '10px';
+    adminBtn.onclick = showAllStudentsResults;
+    document.querySelector('#start .row').appendChild(adminBtn);
+});

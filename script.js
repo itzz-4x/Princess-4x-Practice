@@ -109,9 +109,6 @@ async function calculateScore() {
                 <p><strong>⏸️ Unattempted:</strong> ${unattempted}</p>
                 <p><strong>⏰ Time Left:</strong> ${formatTime(timer)}</p>
             </div>
-            <p style="color: #666; font-size: 14px; margin-top: 15px;">
-                ✅ Result saved to database
-            </p>
         </div>
     `;
 }

@@ -6,7 +6,7 @@ let score = 0;
 const el = id => document.getElementById(id);
 
 // Backend Configuration
-const BACKEND_URL = 'https://princess4x-backend.vercel.app';
+const BACKEND_URL = 'https://princess-4x-practice.vercel.app';
 
 function formatTime(s) {
     const h = Math.floor(s / 3600).toString().padStart(2, '0');

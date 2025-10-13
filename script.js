@@ -121,7 +121,7 @@ function calculateScore() {
     saveResultsLocal(user, score, correct, wrong, unattempted, percentage);
 }
 
-// 📧 Gmail Integration Function - TUMHARI GMAIL ADD KARDI
+// 📧 Gmail Integration Function
 function sendToGmail(user, score, correct, wrong, unattempted, percentage) {
     const subject = `NEET Test Result - ${user}`;
     const body = `
@@ -145,7 +145,7 @@ function sendToGmail(user, score, correct, wrong, unattempted, percentage) {
 Generated via Princess 4X Practice Portal
     `.trim();
 
-    // 📧 TUMHARI GMAIL - mohammedanas4x@gmail.com
+    // 📧 TUMHARI GMAIL
     const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=mohammedanas4x@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     // Open Gmail in new tab
@@ -262,36 +262,50 @@ function clearAllResults() {
     }
 }
 
-// ✅ AUTOMATICALLY FINISH BUTTON CREATE KARO
+// ✅ AUTOMATICALLY FINISH BUTTON CREATE KARO (FIXED)
 function addFinishButton() {
-    const finishBtn = document.createElement('button');
-    finishBtn.id = 'finishBtn';
-    finishBtn.textContent = '🏁 Finish Test';
-    finishBtn.onclick = finishExam;
-    
-    // Navigation mein add karo
-    const nav = document.querySelector('.nav');
-    if (nav) {
-        nav.appendChild(finishBtn);
+    // Wait for exam section to be available
+    setTimeout(() => {
+        const nav = document.querySelector('.nav');
+        if (nav && !document.getElementById('finishBtn')) {
+            const finishBtn = document.createElement('button');
+            finishBtn.id = 'finishBtn';
+            finishBtn.textContent = '🏁 Finish Test';
+            finishBtn.onclick = finishExam;
+            nav.appendChild(finishBtn);
+        }
+    }, 100);
+}
+
+// ✅ ADD ADMIN BUTTON (FIXED)
+function addAdminButton() {
+    const startSection = document.getElementById('start');
+    if (startSection) {
+        const row = startSection.querySelector('.row');
+        if (row && !startSection.querySelector('.admin-btn')) {
+            const adminBtn = document.createElement('button');
+            adminBtn.className = 'admin-btn';
+            adminBtn.textContent = '🔧 Admin Panel';
+            adminBtn.style.background = '#666';
+            adminBtn.style.marginTop = '10px';
+            adminBtn.onclick = showAdminLogin;
+            row.appendChild(adminBtn);
+        }
     }
 }
 
 // Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Add admin button
+    addAdminButton();
+    
+    // Add finish button when exam starts
+    document.getElementById('startBtn').addEventListener('click', function() {
+        setTimeout(addFinishButton, 500);
+    });
+});
+
 document.getElementById('startBtn').addEventListener('click', startExam);
 document.getElementById('prev').addEventListener('click', prevQ);
 document.getElementById('next').addEventListener('click', nextQ);
 document.getElementById('restart').addEventListener('click', () => location.reload());
-
-// 🔧 Admin button aur Finish button add karo start screen par
-document.addEventListener('DOMContentLoaded', function() {
-    // Admin button
-    const adminBtn = document.createElement('button');
-    adminBtn.textContent = '🔧 Admin Panel';
-    adminBtn.style.background = '#666';
-    adminBtn.style.marginTop = '10px';
-    adminBtn.onclick = showAdminLogin;
-    document.querySelector('#start .row').appendChild(adminBtn);
-    
-    // Finish button automatically create karo
-    addFinishButton();
-});

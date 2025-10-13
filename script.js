@@ -244,18 +244,50 @@ async function downloadBackendResults() {
     }
 }
 
+// ✅ FINISH BUTTON AUTOMATICALLY CREATE KARO
+function addFinishButton() {
+    setTimeout(() => {
+        const nav = document.querySelector('.nav');
+        if (nav && !document.getElementById('finishBtn')) {
+            const finishBtn = document.createElement('button');
+            finishBtn.id = 'finishBtn';
+            finishBtn.textContent = '🏁 Finish';
+            finishBtn.onclick = finishExam;
+            nav.appendChild(finishBtn);
+        }
+    }, 100);
+}
+
+// ✅ ADMIN BUTTON FOOTER MEIN ADD KARO
+function addAdminButtonToFooter() {
+    const footer = document.querySelector('.foot');
+    if (footer) {
+        const adminBtn = document.createElement('button');
+        adminBtn.innerHTML = '🔧';
+        adminBtn.title = 'Admin Panel';
+        adminBtn.style.background = 'transparent';
+        adminBtn.style.color = '#fff';
+        adminBtn.style.border = '1px solid rgba(255,255,255,0.3)';
+        adminBtn.style.borderRadius = '50%';
+        adminBtn.style.width = '40px';
+        adminBtn.style.height = '40px';
+        adminBtn.style.fontSize = '16px';
+        adminBtn.style.marginLeft = '10px';
+        adminBtn.style.cursor = 'pointer';
+        adminBtn.onclick = showAllStudentsResults;
+        
+        footer.appendChild(adminBtn);
+    }
+}
+
 // Event Listeners
 document.getElementById('startBtn').addEventListener('click', startExam);
 document.getElementById('prev').addEventListener('click', prevQ);
 document.getElementById('next').addEventListener('click', nextQ);
 document.getElementById('restart').addEventListener('click', () => location.reload());
 
-// Admin Button
+// DOM Load par sab setup karo
 document.addEventListener('DOMContentLoaded', function() {
-    const adminBtn = document.createElement('button');
-    adminBtn.textContent = '🔧 Admin Panel';
-    adminBtn.style.background = '#666';
-    adminBtn.style.marginTop = '10px';
-    adminBtn.onclick = showAllStudentsResults;
-    document.querySelector('#start .row').appendChild(adminBtn);
+    addFinishButton();
+    addAdminButtonToFooter();
 });

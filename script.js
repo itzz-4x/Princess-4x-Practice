@@ -262,19 +262,36 @@ function clearAllResults() {
     }
 }
 
+// ✅ AUTOMATICALLY FINISH BUTTON CREATE KARO
+function addFinishButton() {
+    const finishBtn = document.createElement('button');
+    finishBtn.id = 'finishBtn';
+    finishBtn.textContent = '🏁 Finish Test';
+    finishBtn.onclick = finishExam;
+    
+    // Navigation mein add karo
+    const nav = document.querySelector('.nav');
+    if (nav) {
+        nav.appendChild(finishBtn);
+    }
+}
+
 // Event Listeners
 document.getElementById('startBtn').addEventListener('click', startExam);
 document.getElementById('prev').addEventListener('click', prevQ);
 document.getElementById('next').addEventListener('click', nextQ);
-document.getElementById('finishBtn').addEventListener('click', finishExam);
 document.getElementById('restart').addEventListener('click', () => location.reload());
 
-// 🔧 Admin button add karo start screen par
+// 🔧 Admin button aur Finish button add karo start screen par
 document.addEventListener('DOMContentLoaded', function() {
+    // Admin button
     const adminBtn = document.createElement('button');
     adminBtn.textContent = '🔧 Admin Panel';
     adminBtn.style.background = '#666';
     adminBtn.style.marginTop = '10px';
     adminBtn.onclick = showAdminLogin;
     document.querySelector('#start .row').appendChild(adminBtn);
+    
+    // Finish button automatically create karo
+    addFinishButton();
 });

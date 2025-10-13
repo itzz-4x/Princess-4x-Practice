@@ -128,13 +128,13 @@ async function saveToBackend(user, score, correct, wrong, unattempted, percentag
     };
 
     try {
-        const response = await fetch(`${BACKEND_URL}/api/save-result`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(resultData)
-        });
+        const BACKEND_URL = 'https://princess-4x-practice.vercel.app';
+
+await fetch(`${BACKEND_URL}/api/submit`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(resultData)
+});
 
         if (response.ok) {
             console.log('✅ Result saved to backend database!');
